@@ -24,11 +24,16 @@ build:
   stage: build
   script:
   - ./gradlew clean build -x test
+  only:
+  - /release/.*$/
 
 unit tests:
   stage: test
   script:
   - ./gradlew test
+  only:
+  - /release/.*$/
+
 
 publish_snapshot:
   stage: deploy
