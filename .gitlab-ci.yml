@@ -76,7 +76,7 @@ generate_docs:
   - git checkout gh-pages
 
   script:
-  - cd docs
+  - cd ~/web3j/docs
   - make clean html
   - cp -Rf build/html/* ~/web3j-docs
   - echo "Done"
