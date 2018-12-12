@@ -71,11 +71,14 @@ generate_docs:
   - mkdir -p ~/web3j-docs
   - chmod -R 700 ~/.ssh
   - chmod -R 700 ~/web3j-docs
-
-  script:
   - git clone https://github.com/web3j/web3j.git ~/web3j-docs
   - cd ~/web3j-docs
   - git checkout gh-pages
+
+  script:
+  - cd docs
+  - make clean html
+  - cp -Rf build/html/* ~/web3j-docs
   - echo "Done"
 
 
