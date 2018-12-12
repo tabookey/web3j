@@ -81,7 +81,7 @@ generate_docs:
 
   script:
   - apt-get update
-  - apt-get install -y -qq sphinxsearch
+  - apt-get install -y -qq sphinx-build
 #  - apt-get install -y -qq npm curl
 #  - pip install sphinx
 #  - pip install sphinx_rtd_theme
