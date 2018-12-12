@@ -80,9 +80,8 @@ generate_docs:
   - git checkout gh-pages
 
   script:
-  - apt-get update
-  - apt-get install -y -qq python3-sphinx
-  - apt-get install -y -qq python3-sphinx-rtd-theme
+  - apt-get updat
+  - apt-get install -y -qq python-sphinx python-sphinx-rtd-theme
 #  - apt-get install -y -qq npm curl
 #  - pip install sphinx
 #  - pip install sphinx_rtd_theme
