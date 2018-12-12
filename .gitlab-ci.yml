@@ -1,6 +1,8 @@
-image: python:3.6-alpine
+#image: python:3.6-alpine
 
-# image: node
+image: node
+# node has git
+# python:3.6-alpine has sphinx
 
 variables:
   MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
@@ -78,8 +80,11 @@ generate_docs:
   - git checkout gh-pages
 
   script:
-  - pip install sphinx
-  - pip install sphinx_rtd_theme
+  - apt-get update
+  - apt-get install sphinxsearch
+#  - apt-get install -y -qq npm curl
+#  - pip install sphinx
+#  - pip install sphinx_rtd_theme
   - cd /builds/web3j/web3j/docs
   - make clean html
 #  - cp -Rf build/html/* ~/web3j-docs
