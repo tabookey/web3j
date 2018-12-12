@@ -18,6 +18,7 @@ stages:
 - build
 - test
 - deploy
+- docs
 
 build:
   stage: build
@@ -50,4 +51,16 @@ publish_release:
   when: manual
   only:
   - /release/.*$/
+  - master
+
+generate_docs:
+  stage: docs
+  script:
+  - echo "Starting"
+
+  environment:
+    name: generate_docs
+  when: manual
+  only:
+  - feature/auto-docs
   - master
