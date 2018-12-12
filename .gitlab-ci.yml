@@ -60,12 +60,22 @@ publish_release:
 
 generate_docs:
   stage: docs
-  script:
-  - echo "Starting"
-
   environment:
     name: generate_docs
   when: manual
   only:
   - feature/auto-docs
   - master
+  before_script:
+  - mkdir -p ~/.ssh
+  - mkdir -p ~/web3j-docs
+  - chmod -R 700 ~/.ssh
+  - chmod -R 700 ~/.web3j-docs
+
+  script:
+  - git clone https://github.com/web3j/web3j.git ~/web3j-docs
+  - cd ~/web3j-docs
+  - git checkout gh-pages
+  - echo "Done"
+
+
