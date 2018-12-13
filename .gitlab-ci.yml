@@ -1,6 +1,6 @@
-#image: python:3.6-alpine
+image: python:3.6-alpine
 
-image: node
+#image: node
 # node has git
 # python:3.6-alpine has sphinx
 
@@ -75,13 +75,16 @@ generate_docs:
   - mkdir -p ~/web3j-docs
   - chmod -R 700 ~/.ssh
   - chmod -R 700 ~/web3j-docs
-  - git clone https://github.com/web3j/web3j.git ~/web3j-docs
-  - cd ~/web3j-docs
-  - git checkout gh-pages
+#  - git clone https://github.com/web3j/web3j.git ~/web3j-docs
+#  - cd ~/web3j-docs
+#  - git checkout gh-pages
 
   script:
-  - apt-get update
-  - apt-get install -y -qq python-sphinxcontrib-websupport python3-sphinx python3-sphinx_rtd_theme python3-sphinx-bootstrap-theme sphinx-rtd-theme-common
+  - pip install sphinx
+  - pip install sphinx_rtd_theme
+  - pip install recommonmark
+#  - apt-get update
+#  - apt-get install -y -qq python3-sphinx python3-sphinx-rtd-theme python3-sphinx-bootstrap-theme sphinx-rtd-theme-common
 # - sphinx-build --version
 # python3-setuptools python-sphinxcontrib-httpdomain
 #  - apt-get install -y -qq npm curl
