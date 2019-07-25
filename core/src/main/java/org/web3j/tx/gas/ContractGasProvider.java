@@ -20,8 +20,11 @@ public interface ContractGasProvider {
     @Deprecated
     BigInteger getGasPrice();
 
+    @Deprecated
     BigInteger getGasLimit(String contractFunc);
 
     @Deprecated
     BigInteger getGasLimit();
+
+    BigInteger getGasLimit(String fromAddress, String contractAddress, String data, BigInteger weiValue, BigInteger gasPrice);
 }

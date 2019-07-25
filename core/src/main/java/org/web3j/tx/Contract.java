@@ -334,13 +334,14 @@ public abstract class Contract extends ManagedTransaction {
     TransactionReceipt executeTransaction(String data, BigInteger weiValue, String funcName)
             throws TransactionException, IOException {
 
+        BigInteger gasPrice = gasProvider.getGasPrice(funcName);
         TransactionReceipt receipt =
                 send(
                         contractAddress,
                         data,
                         weiValue,
-                        gasProvider.getGasPrice(funcName),
-                        gasProvider.getGasLimit(funcName));
+                        gasPrice,
+                        gasProvider.getGasLimit(transactionManager.getFromAddress(), contractAddress, data, weiValue, gasPrice));
 
         if (!receipt.isStatusOK()) {
             throw new TransactionException(
