@@ -1122,30 +1122,6 @@ public class SolidityFunctionWrapper extends Generator {
                 "get" + Strings.capitaliseFirstLetter(functionName) + "Events";
         MethodSpec.Builder transactionMethodBuilder =
                 MethodSpec.methodBuilder(generatedFunctionName)
-                        .addModifiers(Modifier.PUBLIC)
-                        .addParameter(TransactionReceipt.class, "transactionReceipt")
-                        .returns(parameterizedTypeName);
-
-        transactionMethodBuilder.addStatement("return "
-                + "staticGet" + Strings.capitaliseFirstLetter(functionName) + "Events("
-                        + "transactionReceipt)");
-        return transactionMethodBuilder.build();
-    }
-
-    MethodSpec buildStaticEventTransactionReceiptFunction(
-            String responseClassName,
-            String functionName,
-            List<NamedTypeName> indexedParameters,
-            List<NamedTypeName> nonIndexedParameters) {
-
-        ParameterizedTypeName parameterizedTypeName =
-                ParameterizedTypeName.get(
-                        ClassName.get(List.class), ClassName.get("", responseClassName));
-
-        String generatedFunctionName =
-                "staticGet" + Strings.capitaliseFirstLetter(functionName) + "Events";
-        MethodSpec.Builder transactionMethodBuilder =
-                MethodSpec.methodBuilder(generatedFunctionName)
                         .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                         .addParameter(TransactionReceipt.class, "transactionReceipt")
                         .returns(parameterizedTypeName);
@@ -1209,10 +1185,6 @@ public class SolidityFunctionWrapper extends Generator {
         List<MethodSpec> methods = new ArrayList<>();
         methods.add(
                 buildEventTransactionReceiptFunction(
-                        responseClassName, functionName, indexedParameters, nonIndexedParameters));
-
-        methods.add(
-                buildStaticEventTransactionReceiptFunction(
                         responseClassName, functionName, indexedParameters, nonIndexedParameters));
 
         methods.add(
