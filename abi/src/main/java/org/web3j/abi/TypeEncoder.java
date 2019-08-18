@@ -39,7 +39,7 @@ import static org.web3j.abi.datatypes.Type.MAX_BYTE_LENGTH;
  */
 public class TypeEncoder {
 
-    private TypeEncoder() {}
+     protected TypeEncoder() {}
 
     static boolean isDynamic(Type parameter) {
         return parameter instanceof DynamicBytes
