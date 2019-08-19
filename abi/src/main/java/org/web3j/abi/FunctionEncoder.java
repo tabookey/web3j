@@ -79,7 +79,7 @@ public class FunctionEncoder {
 
             if (TypeEncoder.isDynamic(parameter)) {
                 String encodedDataOffset =
-                        TypeEncoder.encodeNumeric(new Uint(BigInteger.valueOf(dynamicDataOffset)));
+                        TypeEncoder.encodeNumeric(new Uint(BigInteger.valueOf(dynamicDataOffset)), false);
                 result.append(encodedDataOffset);
                 dynamicData.append(encodedValue);
                 dynamicDataOffset += encodedValue.length() >> 1;

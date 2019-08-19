@@ -30,6 +30,7 @@ import org.web3j.abi.datatypes.Uint;
 import org.web3j.abi.datatypes.Utf8String;
 import org.web3j.utils.Numeric;
 
+import static org.web3j.abi.TypeDecoder.getTypeLengthInBytes;
 import static org.web3j.abi.datatypes.Type.MAX_BIT_LENGTH;
 import static org.web3j.abi.datatypes.Type.MAX_BYTE_LENGTH;
 
@@ -39,7 +40,8 @@ import static org.web3j.abi.datatypes.Type.MAX_BYTE_LENGTH;
  */
 public class TypeEncoder {
 
-     protected TypeEncoder() {}
+    protected TypeEncoder() {
+    }
 
     static boolean isDynamic(Type parameter) {
         return parameter instanceof DynamicBytes
@@ -47,38 +49,48 @@ public class TypeEncoder {
                 || parameter instanceof DynamicArray;
     }
 
-    @SuppressWarnings("unchecked")
     public static String encode(Type parameter) {
+        return encode(parameter, false);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static String encode(Type parameter, boolean packed) {
         if (parameter instanceof NumericType) {
-            return encodeNumeric(((NumericType) parameter));
+            return encodeNumeric((NumericType) parameter, packed);
         } else if (parameter instanceof Address) {
-            return encodeAddress((Address) parameter);
+            return encodeAddress((Address) parameter, packed);
         } else if (parameter instanceof Bool) {
-            return encodeBool((Bool) parameter);
+            return encodeBool((Bool) parameter, packed);
         } else if (parameter instanceof Bytes) {
-            return encodeBytes((Bytes) parameter);
+            return encodeBytes((Bytes) parameter, packed);
         } else if (parameter instanceof DynamicBytes) {
-            return encodeDynamicBytes((DynamicBytes) parameter);
+            return encodeDynamicBytes((DynamicBytes) parameter, packed);
         } else if (parameter instanceof Utf8String) {
-            return encodeString((Utf8String) parameter);
+            return encodeString((Utf8String) parameter, packed);
         } else if (parameter instanceof StaticArray) {
-            return encodeArrayValues((StaticArray) parameter);
+            return encodeArrayValues((StaticArray) parameter, false);
         } else if (parameter instanceof DynamicArray) {
-            return encodeDynamicArray((DynamicArray) parameter);
+            return encodeDynamicArray((DynamicArray) parameter, packed);
         } else {
             throw new UnsupportedOperationException(
                     "Type cannot be encoded: " + parameter.getClass());
         }
     }
 
-    static String encodeAddress(Address address) {
-        return encodeNumeric(address.toUint160());
+    static String encodeAddress(Address address, boolean packed) {
+        return encodeNumeric(address.toUint160(), packed);
     }
 
-    static String encodeNumeric(NumericType numericType) {
+    static String encodeNumeric(NumericType numericType, boolean packed) {
         byte[] rawValue = toByteArray(numericType);
         byte paddingValue = getPaddingValue(numericType);
-        byte[] paddedRawValue = new byte[MAX_BYTE_LENGTH];
+        byte[] paddedRawValue;
+        if (packed) {
+            paddedRawValue = new byte[getTypeLengthInBytes(numericType.getClass())];
+        }else {
+            paddedRawValue = new byte[MAX_BYTE_LENGTH];
+        }
+
         if (paddingValue != 0) {
             for (int i = 0; i < paddedRawValue.length; i++) {
                 paddedRawValue[i] = paddingValue;
@@ -86,7 +98,7 @@ public class TypeEncoder {
         }
 
         System.arraycopy(
-                rawValue, 0, paddedRawValue, MAX_BYTE_LENGTH - rawValue.length, rawValue.length);
+                rawValue, 0, paddedRawValue, paddedRawValue.length - rawValue.length, rawValue.length);
         return Numeric.toHexStringNoPrefix(paddedRawValue);
     }
 
@@ -113,7 +125,11 @@ public class TypeEncoder {
         return value.toByteArray();
     }
 
-    static String encodeBool(Bool value) {
+    static String encodeBool(Bool value, boolean packed) {
+        if (packed) {
+            byte byteValue = ((byte) (value.getValue() ? 1 : 0));
+            return Numeric.toHexStringNoPrefix(new byte[]{byteValue});
+        }
         byte[] rawValue = new byte[MAX_BYTE_LENGTH];
         if (value.getValue()) {
             rawValue[rawValue.length - 1] = 1;
@@ -121,8 +137,11 @@ public class TypeEncoder {
         return Numeric.toHexStringNoPrefix(rawValue);
     }
 
-    static String encodeBytes(BytesType bytesType) {
+    static String encodeBytes(BytesType bytesType, boolean packed) {
         byte[] value = bytesType.getValue();
+        if (packed) {
+            return Numeric.toHexStringNoPrefix(value);
+        }
         int length = value.length;
         int mod = length % MAX_BYTE_LENGTH;
 
@@ -137,10 +156,13 @@ public class TypeEncoder {
         return Numeric.toHexStringNoPrefix(dest);
     }
 
-    static String encodeDynamicBytes(DynamicBytes dynamicBytes) {
+    static String encodeDynamicBytes(DynamicBytes dynamicBytes, boolean packed) {
+        String encodedValue = encodeBytes(dynamicBytes, packed);
+        if (packed) {
+            return encodedValue;
+        }
         int size = dynamicBytes.getValue().length;
-        String encodedLength = encode(new Uint(BigInteger.valueOf(size)));
-        String encodedValue = encodeBytes(dynamicBytes);
+        String encodedLength = encode(new Uint(BigInteger.valueOf(size)), packed);
 
         StringBuilder result = new StringBuilder();
         result.append(encodedLength);
@@ -148,24 +170,27 @@ public class TypeEncoder {
         return result.toString();
     }
 
-    static String encodeString(Utf8String string) {
+    static String encodeString(Utf8String string, boolean packed) {
         byte[] utfEncoded = string.getValue().getBytes(StandardCharsets.UTF_8);
-        return encodeDynamicBytes(new DynamicBytes(utfEncoded));
+        return encodeDynamicBytes(new DynamicBytes(utfEncoded), packed);
     }
 
-    static <T extends Type> String encodeArrayValues(Array<T> value) {
+    static <T extends Type> String encodeArrayValues(Array<T> value, boolean packed) {
         StringBuilder result = new StringBuilder();
         for (Type type : value.getValue()) {
-            result.append(TypeEncoder.encode(type));
+            result.append(encode(type, false));
         }
         return result.toString();
     }
 
-    static <T extends Type> String encodeDynamicArray(DynamicArray<T> value) {
+    static <T extends Type> String encodeDynamicArray(DynamicArray<T> value, boolean packed) {
         int size = value.getValue().size();
         String encodedLength = encode(new Uint(BigInteger.valueOf(size)));
         String valuesOffsets = encodeArrayValuesOffsets(value);
-        String encodedValues = encodeArrayValues(value);
+        String encodedValues = encodeArrayValues(value, packed);
+        if (packed) {
+            return encodedValues;
+        }
 
         StringBuilder result = new StringBuilder();
         result.append(encodedLength);
