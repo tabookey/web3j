@@ -191,7 +191,7 @@ public class FunctionReturnDecoderTest {
     @Test
     public void testDecodeIndexedUint256Value() {
         Uint256 value = new Uint256(BigInteger.TEN);
-        String encoded = TypeEncoder.encodeNumeric(value, false);
+        String encoded = TypeEncoder.encodeNumeric(value);
 
         assertThat(
                 FunctionReturnDecoder.decodeIndexedValue(encoded, new TypeReference<Uint256>() {}),
@@ -201,7 +201,7 @@ public class FunctionReturnDecoderTest {
     @Test
     public void testDecodeIndexedStringValue() {
         Utf8String string = new Utf8String("some text");
-        String encoded = TypeEncoder.encodeString(string, false);
+        String encoded = TypeEncoder.encodeString(string);
         String hash = Hash.sha3(encoded);
 
         assertThat(
@@ -232,7 +232,7 @@ public class FunctionReturnDecoderTest {
     @Test
     public void testDecodeIndexedDynamicBytesValue() {
         DynamicBytes bytes = new DynamicBytes(new byte[] {1, 2, 3, 4, 5});
-        String encoded = TypeEncoder.encodeDynamicBytes(bytes, false);
+        String encoded = TypeEncoder.encodeDynamicBytes(bytes);
         String hash = Hash.sha3(encoded);
 
         assertThat(
@@ -246,7 +246,7 @@ public class FunctionReturnDecoderTest {
         DynamicArray<Uint256> array =
                 new DynamicArray<>(Uint256.class, new Uint256(BigInteger.TEN));
 
-        String encoded = TypeEncoder.encodeDynamicArray(array, false);
+        String encoded = TypeEncoder.encodeDynamicArray(array);
         String hash = Hash.sha3(encoded);
 
         assertThat(

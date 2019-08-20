@@ -49,52 +49,74 @@ public class TypeEncoder {
                 || parameter instanceof DynamicArray;
     }
 
-    public static String encode(Type parameter) {
-        return encode(parameter, false);
-    }
-
-    public static String encodePacked(Type parameter) { return encode(parameter, true);}
-
     @SuppressWarnings("unchecked")
-    static String encode(Type parameter, boolean packed) {
+    public static String encode(Type parameter) {
         if (parameter instanceof NumericType) {
-            return encodeNumeric((NumericType) parameter, packed);
+            return encodeNumeric((NumericType) parameter);
         } else if (parameter instanceof Address) {
-            return encodeAddress((Address) parameter, packed);
+            return encodeAddress((Address) parameter);
         } else if (parameter instanceof Bool) {
-            return encodeBool((Bool) parameter, packed);
+            return encodeBool((Bool) parameter);
         } else if (parameter instanceof Bytes) {
-            return encodeBytes((Bytes) parameter, packed);
+            return encodeBytes((Bytes) parameter);
         } else if (parameter instanceof DynamicBytes) {
-            return encodeDynamicBytes((DynamicBytes) parameter, packed);
+            return encodeDynamicBytes((DynamicBytes) parameter);
         } else if (parameter instanceof Utf8String) {
-            return encodeString((Utf8String) parameter, packed);
+            return encodeString((Utf8String) parameter);
         } else if (parameter instanceof StaticArray) {
             return encodeArrayValues((StaticArray) parameter);
         } else if (parameter instanceof DynamicArray) {
-            return encodeDynamicArray((DynamicArray) parameter, packed);
+            return encodeDynamicArray((DynamicArray) parameter);
         } else {
             throw new UnsupportedOperationException(
                     "Type cannot be encoded: " + parameter.getClass());
         }
     }
 
-    static String encodeAddress(Address address, boolean packed) {
-        if (packed) {
-            return Numeric.cleanHexPrefix(address.toString());
+    @SuppressWarnings("unchecked")
+    public static String encodePacked(Type parameter) {
+        if (parameter instanceof NumericType) {
+            return encodeNumericPacked((NumericType) parameter);
+        } else if (parameter instanceof Address) {
+            return encodeAddressPacked((Address) parameter);
+        } else if (parameter instanceof Bool) {
+            return encodeBoolPacked((Bool) parameter);
+        } else if (parameter instanceof Bytes) {
+            return encodeBytesPacked((Bytes) parameter);
+        } else if (parameter instanceof DynamicBytes) {
+            return encodeDynamicBytesPacked((DynamicBytes) parameter);
+        } else if (parameter instanceof Utf8String) {
+            return encodeStringPacked((Utf8String) parameter);
+        } else if (parameter instanceof StaticArray) {
+            return encodeArrayValues((StaticArray) parameter);
+        } else if (parameter instanceof DynamicArray) {
+            return encodeDynamicArrayPacked((DynamicArray) parameter);
+        } else {
+            throw new UnsupportedOperationException(
+                    "Type cannot be encoded: " + parameter.getClass());
         }
-        return Numeric.toHexStringNoPrefixZeroPadded(address.toUint160().getValue(),MAX_BYTE_LENGTH * 2);
     }
 
-    static String encodeNumeric(NumericType numericType, boolean packed) {
+    static String encodeAddress(Address address) {
+        return Numeric.toHexStringNoPrefixZeroPadded(address.toUint160().getValue(), MAX_BYTE_LENGTH * 2);
+    }
+
+    static String encodeAddressPacked(Address address) {
+        return Numeric.cleanHexPrefix(address.toString());
+    }
+
+    static String encodeNumeric(NumericType numericType) {
+        return encodeNumericWithPaddedSize(numericType, MAX_BYTE_LENGTH);
+    }
+
+    static String encodeNumericPacked(NumericType numericType) {
+        return encodeNumericWithPaddedSize(numericType, getTypeLengthInBytes(numericType.getClass()));
+    }
+
+    private static String encodeNumericWithPaddedSize(NumericType numericType, int paddedRawValueSize) {
         byte[] rawValue = toByteArray(numericType);
         byte paddingValue = getPaddingValue(numericType);
-        byte[] paddedRawValue;
-        if (packed) {
-            paddedRawValue = new byte[getTypeLengthInBytes(numericType.getClass())];
-        }else {
-            paddedRawValue = new byte[MAX_BYTE_LENGTH];
-        }
+        byte[] paddedRawValue = new byte[paddedRawValueSize];
 
         if (paddingValue != 0) {
             for (int i = 0; i < paddedRawValue.length; i++) {
@@ -105,6 +127,7 @@ public class TypeEncoder {
         System.arraycopy(
                 rawValue, 0, paddedRawValue, paddedRawValue.length - rawValue.length, rawValue.length);
         return Numeric.toHexStringNoPrefix(paddedRawValue);
+
     }
 
     private static byte getPaddingValue(NumericType numericType) {
@@ -130,11 +153,7 @@ public class TypeEncoder {
         return value.toByteArray();
     }
 
-    static String encodeBool(Bool value, boolean packed) {
-        if (packed) {
-            byte byteValue = ((byte) (value.getValue() ? 1 : 0));
-            return Numeric.toHexStringNoPrefix(new byte[]{byteValue});
-        }
+    static String encodeBool(Bool value) {
         byte[] rawValue = new byte[MAX_BYTE_LENGTH];
         if (value.getValue()) {
             rawValue[rawValue.length - 1] = 1;
@@ -142,11 +161,13 @@ public class TypeEncoder {
         return Numeric.toHexStringNoPrefix(rawValue);
     }
 
-    static String encodeBytes(BytesType bytesType, boolean packed) {
+    static String encodeBoolPacked(Bool value) {
+        byte byteValue = ((byte) (value.getValue() ? 1 : 0));
+        return Numeric.toHexStringNoPrefix(new byte[]{byteValue});
+    }
+
+    static String encodeBytes(BytesType bytesType) {
         byte[] value = bytesType.getValue();
-        if (packed) {
-            return Numeric.toHexStringNoPrefix(value);
-        }
         int length = value.length;
         int mod = length % MAX_BYTE_LENGTH;
 
@@ -161,13 +182,15 @@ public class TypeEncoder {
         return Numeric.toHexStringNoPrefix(dest);
     }
 
-    static String encodeDynamicBytes(DynamicBytes dynamicBytes, boolean packed) {
-        String encodedValue = encodeBytes(dynamicBytes, packed);
-        if (packed) {
-            return encodedValue;
-        }
+    static String encodeBytesPacked(BytesType bytesType) {
+        byte[] value = bytesType.getValue();
+        return Numeric.toHexStringNoPrefix(value);
+    }
+
+    static String encodeDynamicBytes(DynamicBytes dynamicBytes) {
+        String encodedValue = encodeBytes(dynamicBytes);
         int size = dynamicBytes.getValue().length;
-        String encodedLength = encode(new Uint(BigInteger.valueOf(size)), packed);
+        String encodedLength = encode(new Uint(BigInteger.valueOf(size)));
 
         StringBuilder result = new StringBuilder();
         result.append(encodedLength);
@@ -175,33 +198,45 @@ public class TypeEncoder {
         return result.toString();
     }
 
-    static String encodeString(Utf8String string, boolean packed) {
+    static String encodeDynamicBytesPacked(DynamicBytes dynamicBytes) {
+        String encodedValue = encodeBytesPacked(dynamicBytes);
+        return encodedValue;
+    }
+
+    static String encodeString(Utf8String string) {
         byte[] utfEncoded = string.getValue().getBytes(StandardCharsets.UTF_8);
-        return encodeDynamicBytes(new DynamicBytes(utfEncoded), packed);
+        return encodeDynamicBytes(new DynamicBytes(utfEncoded));
+    }
+
+    static String encodeStringPacked(Utf8String string) {
+        byte[] utfEncoded = string.getValue().getBytes(StandardCharsets.UTF_8);
+        return encodeDynamicBytesPacked(new DynamicBytes(utfEncoded));
     }
 
     static <T extends Type> String encodeArrayValues(Array<T> value) {
         StringBuilder result = new StringBuilder();
         for (Type type : value.getValue()) {
-            result.append(encode(type, false));
+            result.append(encode(type));
         }
         return result.toString();
     }
 
-    static <T extends Type> String encodeDynamicArray(DynamicArray<T> value, boolean packed) {
+    static <T extends Type> String encodeDynamicArray(DynamicArray<T> value) {
         int size = value.getValue().size();
         String encodedLength = encode(new Uint(BigInteger.valueOf(size)));
         String valuesOffsets = encodeArrayValuesOffsets(value);
         String encodedValues = encodeArrayValues(value);
-        if (packed) {
-            return encodedValues;
-        }
 
         StringBuilder result = new StringBuilder();
         result.append(encodedLength);
         result.append(valuesOffsets);
         result.append(encodedValues);
         return result.toString();
+    }
+
+    static <T extends Type> String encodeDynamicArrayPacked(DynamicArray<T> value) {
+        String encodedValues = encodeArrayValues(value);
+        return encodedValues;
     }
 
     private static <T extends Type> String encodeArrayValuesOffsets(DynamicArray<T> value) {
