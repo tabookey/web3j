@@ -14,6 +14,7 @@ package org.web3j.abi;
 
 import java.math.BigInteger;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.web3j.abi.datatypes.Address;
@@ -36,31 +37,40 @@ import org.web3j.utils.Numeric;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class TypeEncoderTest {
-
-    boolean packed = false;
 
     @Test
     public void testBoolEncode() {
         assertThat(
-                TypeEncoder.encodeBool(new Bool(false), packed),
+                TypeEncoder.encodeBool(new Bool(false), false),
                 is("0000000000000000000000000000000000000000000000000000000000000000"));
         assertThat(
-                TypeEncoder.encodeBool(new Bool(true), packed),
+                TypeEncoder.encodeBool(new Bool(true), false),
                 is("0000000000000000000000000000000000000000000000000000000000000001"));
+    }
+
+    @Test
+    public void testBoolEncodePacked() {
+        assertThat(
+                TypeEncoder.encodeBool(new Bool(false), true),
+                is("00"));
+        assertThat(
+                TypeEncoder.encodeBool(new Bool(true), true),
+                is("01"));
     }
 
     @Test
     public void testUintEncode() {
         Uint zero = new Uint64(BigInteger.ZERO);
         assertThat(
-                TypeEncoder.encodeNumeric(zero, packed),
+                TypeEncoder.encodeNumeric(zero, false),
                 is("0000000000000000000000000000000000000000000000000000000000000000"));
 
         Uint maxLong = new Uint64(BigInteger.valueOf(Long.MAX_VALUE));
         assertThat(
-                TypeEncoder.encodeNumeric(maxLong, packed),
+                TypeEncoder.encodeNumeric(maxLong, false),
                 is("0000000000000000000000000000000000000000000000007fffffffffffffff"));
 
         Uint maxValue =
@@ -69,7 +79,7 @@ public class TypeEncoderTest {
                                 "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                                 16));
         assertThat(
-                TypeEncoder.encodeNumeric(maxValue, packed),
+                TypeEncoder.encodeNumeric(maxValue, false),
                 is("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 
         Uint largeValue =
@@ -78,7 +88,38 @@ public class TypeEncoderTest {
                                 "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
                                 16));
         assertThat(
-                TypeEncoder.encodeNumeric(largeValue, packed),
+                TypeEncoder.encodeNumeric(largeValue, false),
+                is("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"));
+    }
+
+    @Test
+    public void testUintEncodePacked() {
+        Uint zero = new Uint64(BigInteger.ZERO);
+        assertThat(
+                TypeEncoder.encodeNumeric(zero, true),
+                is("0000000000000000"));
+
+        Uint maxLong = new Uint64(BigInteger.valueOf(Long.MAX_VALUE));
+        assertThat(
+                TypeEncoder.encodeNumeric(maxLong, true),
+                is("7fffffffffffffff"));
+
+        Uint maxValue =
+                new Uint(
+                        new BigInteger(
+                                "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                                16));
+        assertThat(
+                TypeEncoder.encodeNumeric(maxValue, true),
+                is("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+
+        Uint largeValue =
+                new Uint(
+                        new BigInteger(
+                                "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe",
+                                16));
+        assertThat(
+                TypeEncoder.encodeNumeric(largeValue, true),
                 is("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"));
     }
 
@@ -99,22 +140,45 @@ public class TypeEncoderTest {
     public void testIntEncode() {
         Int zero = new Int64(BigInteger.ZERO);
         assertThat(
-                TypeEncoder.encodeNumeric(zero, packed),
+                TypeEncoder.encodeNumeric(zero, false),
                 is("0000000000000000000000000000000000000000000000000000000000000000"));
 
         Int maxLong = new Int64(BigInteger.valueOf(Long.MAX_VALUE));
         assertThat(
-                TypeEncoder.encodeNumeric(maxLong, packed),
+                TypeEncoder.encodeNumeric(maxLong, false),
                 is("0000000000000000000000000000000000000000000000007fffffffffffffff"));
 
         Int minLong = new Int64(BigInteger.valueOf(Long.MIN_VALUE));
         assertThat(
-                TypeEncoder.encodeNumeric(minLong, packed),
+                TypeEncoder.encodeNumeric(minLong, false),
                 is("ffffffffffffffffffffffffffffffffffffffffffffffff8000000000000000"));
 
         Int minusOne = new Int(BigInteger.valueOf(-1));
         assertThat(
-                TypeEncoder.encodeNumeric(minusOne, packed),
+                TypeEncoder.encodeNumeric(minusOne, false),
+                is("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+    }
+
+    @Test
+    public void testIntEncodePacked() {
+        Int zero = new Int64(BigInteger.ZERO);
+        assertThat(
+                TypeEncoder.encodeNumeric(zero, true),
+                is("0000000000000000"));
+
+        Int maxLong = new Int64(BigInteger.valueOf(Long.MAX_VALUE));
+        assertThat(
+                TypeEncoder.encodeNumeric(maxLong, true),
+                is("7fffffffffffffff"));
+
+        Int minLong = new Int64(BigInteger.valueOf(Long.MIN_VALUE));
+        assertThat(
+                TypeEncoder.encodeNumeric(minLong, true),
+                is("8000000000000000"));
+
+        Int minusOne = new Int(BigInteger.valueOf(-1));
+        assertThat(
+                TypeEncoder.encodeNumeric(minusOne, true),
                 is("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
     }
 
@@ -163,39 +227,57 @@ public class TypeEncoderTest {
     public void testStaticBytes() {
         Bytes staticBytes = new Bytes6(new byte[] {0, 1, 2, 3, 4, 5});
         assertThat(
-                TypeEncoder.encodeBytes(staticBytes, packed),
+                TypeEncoder.encodeBytes(staticBytes, false),
                 is("0001020304050000000000000000000000000000000000000000000000000000"));
 
         Bytes empty = new Bytes1(new byte[] {0});
         assertThat(
-                TypeEncoder.encodeBytes(empty, packed),
+                TypeEncoder.encodeBytes(empty, false),
                 is("0000000000000000000000000000000000000000000000000000000000000000"));
 
         Bytes dave = new Bytes4("dave".getBytes());
         assertThat(
-                TypeEncoder.encodeBytes(dave, packed),
+                TypeEncoder.encodeBytes(dave, false),
                 is("6461766500000000000000000000000000000000000000000000000000000000"));
+    }
+
+    @Test
+    public void testStaticBytesPacked() {
+        Bytes staticBytes = new Bytes6(new byte[] {0, 1, 2, 3, 4, 5});
+        assertThat(
+                TypeEncoder.encodeBytes(staticBytes, true),
+                is("000102030405"));
+
+        Bytes empty = new Bytes1(new byte[] {0});
+        assertThat(
+                TypeEncoder.encodeBytes(empty, true),
+                is("00"));
+
+        Bytes dave = new Bytes4("dave".getBytes());
+        assertThat(
+                TypeEncoder.encodeBytes(dave, true),
+                is("64617665"));
     }
 
     @Test
     public void testDynamicBytes() {
         DynamicBytes dynamicBytes = new DynamicBytes(new byte[] {0, 1, 2, 3, 4, 5});
         assertThat(
-                TypeEncoder.encodeDynamicBytes(dynamicBytes, packed),
+                TypeEncoder.encodeDynamicBytes(dynamicBytes, false),
                 is(
                         "0000000000000000000000000000000000000000000000000000000000000006"
                                 + "0001020304050000000000000000000000000000000000000000000000000000"));
 
         DynamicBytes empty = new DynamicBytes(new byte[] {0});
         assertThat(
-                TypeEncoder.encodeDynamicBytes(empty, packed),
+                TypeEncoder.encodeDynamicBytes(empty, false),
                 is(
                         "0000000000000000000000000000000000000000000000000000000000000001"
                                 + "0000000000000000000000000000000000000000000000000000000000000000"));
 
         DynamicBytes dave = new DynamicBytes("dave".getBytes());
         assertThat(
-                TypeEncoder.encodeDynamicBytes(dave, packed),
+                TypeEncoder.encodeDynamicBytes(dave, false),
                 is(
                         "0000000000000000000000000000000000000000000000000000000000000004"
                                 + "6461766500000000000000000000000000000000000000000000000000000000"));
@@ -211,7 +293,7 @@ public class TypeEncoderTest {
                                         + "deserunt mollit anim id est laborum.")
                                 .getBytes());
         assertThat(
-                TypeEncoder.encodeDynamicBytes(loremIpsum, packed),
+                TypeEncoder.encodeDynamicBytes(loremIpsum, false),
                 is(
                         "00000000000000000000000000000000000000000000000000000000000001bd"
                                 + "4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e73"
@@ -231,22 +313,87 @@ public class TypeEncoderTest {
     }
 
     @Test
+    public void testDynamicBytesPacked() {
+        DynamicBytes dynamicBytes = new DynamicBytes(new byte[] {0, 1, 2, 3, 4, 5});
+        assertThat(
+                TypeEncoder.encodeDynamicBytes(dynamicBytes, true),
+                is("000102030405"));
+
+        DynamicBytes empty = new DynamicBytes(new byte[] {0});
+        assertThat(
+                TypeEncoder.encodeDynamicBytes(empty, true),
+                is("00"));
+
+        DynamicBytes dave = new DynamicBytes("dave".getBytes());
+        assertThat(
+                TypeEncoder.encodeDynamicBytes(dave, true),
+                is(
+                        "64617665"));
+
+        DynamicBytes loremIpsum =
+                new DynamicBytes(
+                        ("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
+                                + "tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim "
+                                + "veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex "
+                                + "ea commodo consequat. Duis aute irure dolor in reprehenderit in "
+                                + "voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur "
+                                + "sint occaecat cupidatat non proident, sunt in culpa qui officia "
+                                + "deserunt mollit anim id est laborum.")
+                                .getBytes());
+        assertThat(
+                TypeEncoder.encodeDynamicBytes(loremIpsum, true),
+                is(
+                        "4c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e73"
+                                + "656374657475722061646970697363696e6720656c69742c2073656420646f20"
+                                + "656975736d6f642074656d706f7220696e6369646964756e74207574206c6162"
+                                + "6f726520657420646f6c6f7265206d61676e6120616c697175612e2055742065"
+                                + "6e696d206164206d696e696d2076656e69616d2c2071756973206e6f73747275"
+                                + "6420657865726369746174696f6e20756c6c616d636f206c61626f726973206e"
+                                + "69736920757420616c697175697020657820656120636f6d6d6f646f20636f6e"
+                                + "7365717561742e2044756973206175746520697275726520646f6c6f7220696e"
+                                + "20726570726568656e646572697420696e20766f6c7570746174652076656c69"
+                                + "7420657373652063696c6c756d20646f6c6f726520657520667567696174206e"
+                                + "756c6c612070617269617475722e204578636570746575722073696e74206f63"
+                                + "63616563617420637570696461746174206e6f6e2070726f6964656e742c2073"
+                                + "756e7420696e2063756c706120717569206f666669636961206465736572756e"
+                                + "74206d6f6c6c697420616e696d20696420657374206c61626f72756d2e"));
+    }
+
+    @Test
     public void testAddress() {
         Address address = new Address("0xbe5422d15f39373eb0a97ff8c10fbd0e40e29338");
         assertThat(address.getTypeAsString(), is("address"));
         assertThat(
-                TypeEncoder.encodeAddress(address, packed),
+                TypeEncoder.encodeAddress(address, false),
                 is("000000000000000000000000be5422d15f39373eb0a97ff8c10fbd0e40e29338"));
+    }
+
+    @Test
+    public void testAddressPacked() {
+        Address address = new Address("0xbe5422d15f39373eb0a97ff8c10fbd0e40e29338");
+        assertThat(address.getTypeAsString(), is("address"));
+        assertThat(
+                TypeEncoder.encodeAddress(address, true),
+                is("be5422d15f39373eb0a97ff8c10fbd0e40e29338"));
     }
 
     @Test
     public void testUtf8String() {
         Utf8String string = new Utf8String("Hello, world!");
         assertThat(
-                TypeEncoder.encodeString(string, packed),
+                TypeEncoder.encodeString(string, false),
                 is(
                         "000000000000000000000000000000000000000000000000000000000000000d"
                                 + "48656c6c6f2c20776f726c642100000000000000000000000000000000000000"));
+    }
+
+    @Test
+    public void testUtf8StringPacked() {
+        Utf8String string = new Utf8String("Hello, world!");
+        assertThat(
+                TypeEncoder.encodeString(string, true),
+                is(
+                        "48656c6c6f2c20776f726c6421"));
     }
 
     @Test
@@ -258,7 +405,7 @@ public class TypeEncoderTest {
                         new Ufixed(BigInteger.valueOf(0x8), BigInteger.valueOf(0x8)));
 
         assertThat(
-                TypeEncoder.encodeArrayValues(array, packed),
+                TypeEncoder.encodeArrayValues(array),
                 is(
                         "0000000000000000000000000000000220000000000000000000000000000000"
                                 + "0000000000000000000000000000000880000000000000000000000000000000"));
@@ -274,10 +421,27 @@ public class TypeEncoderTest {
                         new Uint(BigInteger.valueOf(3)));
 
         assertThat(
-                TypeEncoder.encodeDynamicArray(array, packed),
+                TypeEncoder.encodeDynamicArray(array, false),
                 is(
                         "0000000000000000000000000000000000000000000000000000000000000003"
                                 + "0000000000000000000000000000000000000000000000000000000000000001"
+                                + "0000000000000000000000000000000000000000000000000000000000000002"
+                                + "0000000000000000000000000000000000000000000000000000000000000003"));
+    }
+
+    @Test
+    public void testDynamicArrayPacked() {
+        DynamicArray<Uint> array =
+                new DynamicArray<>(
+                        Uint.class,
+                        new Uint(BigInteger.ONE),
+                        new Uint(BigInteger.valueOf(2)),
+                        new Uint(BigInteger.valueOf(3)));
+
+        assertThat(
+                TypeEncoder.encodeDynamicArray(array, true),
+                is(
+                        "0000000000000000000000000000000000000000000000000000000000000001"
                                 + "0000000000000000000000000000000000000000000000000000000000000002"
                                 + "0000000000000000000000000000000000000000000000000000000000000003"));
     }
@@ -287,8 +451,17 @@ public class TypeEncoderTest {
         @SuppressWarnings("unchecked")
         DynamicArray<Uint> array = new DynamicArray(Uint.class);
         assertThat(
-                TypeEncoder.encodeDynamicArray(array, packed),
+                TypeEncoder.encodeDynamicArray(array, false),
                 is("0000000000000000000000000000000000000000000000000000000000000000"));
+    }
+
+    @Test
+    public void testEmptyArrayPacked() {
+        @SuppressWarnings("unchecked")
+        DynamicArray<Uint> array = new DynamicArray(Uint.class);
+        assertThat(
+                TypeEncoder.encodeDynamicArray(array, true),
+                is(""));
     }
 
     @Test
@@ -311,7 +484,7 @@ public class TypeEncoderTest {
                 new DynamicArray<>(new DynamicBytes(new byte[0]), new DynamicBytes(new byte[0]));
 
         assertThat(
-                TypeEncoder.encodeDynamicArray(array, packed),
+                TypeEncoder.encodeDynamicArray(array, false),
                 //  array length
                 is(
                         "0000000000000000000000000000000000000000000000000000000000000003"
@@ -338,11 +511,11 @@ public class TypeEncoderTest {
                                 // third bytes
                                 + "9215c928b97e0ebeeefd10003a4e3eea23f2eb3acbab477eeb589d7a8874d7c5"));
         assertThat(
-                TypeEncoder.encodeDynamicArray(emptyArray, packed),
+                TypeEncoder.encodeDynamicArray(emptyArray, false),
                 //  array length
                 is("0000000000000000000000000000000000000000000000000000000000000000"));
         assertThat(
-                TypeEncoder.encodeDynamicArray(arrayOfEmptyBytes, packed),
+                TypeEncoder.encodeDynamicArray(arrayOfEmptyBytes, false),
                 //  array length
                 is(
                         "0000000000000000000000000000000000000000000000000000000000000002"
@@ -354,6 +527,11 @@ public class TypeEncoderTest {
                                 + "0000000000000000000000000000000000000000000000000000000000000000"
                                 // length second bytes
                                 + "0000000000000000000000000000000000000000000000000000000000000000"));
+    }
+
+    @Ignore
+    public void testArrayOfBytesPacked() {
+        // Currently Solidity does not support encodePacked of two dimensional arrays
     }
 
     @Test
@@ -371,7 +549,7 @@ public class TypeEncoderTest {
                 new DynamicArray<>(new Utf8String(""), new Utf8String(""));
 
         assertThat(
-                TypeEncoder.encodeDynamicArray(array, packed),
+                TypeEncoder.encodeDynamicArray(array, false),
                 //  array length
                 is(
                         "0000000000000000000000000000000000000000000000000000000000000004"
@@ -402,11 +580,11 @@ public class TypeEncoderTest {
                                 // fourth string
                                 + "776562336a000000000000000000000000000000000000000000000000000000"));
         assertThat(
-                TypeEncoder.encodeDynamicArray(emptyArray, packed),
+                TypeEncoder.encodeDynamicArray(emptyArray, false),
                 //  array length
                 is("0000000000000000000000000000000000000000000000000000000000000000"));
         assertThat(
-                TypeEncoder.encodeDynamicArray(arrayOfEmptyStrings, packed),
+                TypeEncoder.encodeDynamicArray(arrayOfEmptyStrings, false),
                 //  array length
                 is(
                         "0000000000000000000000000000000000000000000000000000000000000002"
@@ -418,5 +596,10 @@ public class TypeEncoderTest {
                                 + "0000000000000000000000000000000000000000000000000000000000000000"
                                 // length second string
                                 + "0000000000000000000000000000000000000000000000000000000000000000"));
+    }
+
+    @Test
+    public void testArrayOfStringsPacked() {
+        // Currently Solidity does not support encodePacked of two dimensional arrays
     }
 }

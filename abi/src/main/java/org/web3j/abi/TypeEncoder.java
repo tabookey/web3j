@@ -40,7 +40,7 @@ import static org.web3j.abi.datatypes.Type.MAX_BYTE_LENGTH;
  */
 public class TypeEncoder {
 
-    protected TypeEncoder() {
+    private TypeEncoder() {
     }
 
     static boolean isDynamic(Type parameter) {
@@ -53,8 +53,10 @@ public class TypeEncoder {
         return encode(parameter, false);
     }
 
+    public static String encodePacked(Type parameter) { return encode(parameter, true);}
+
     @SuppressWarnings("unchecked")
-    public static String encode(Type parameter, boolean packed) {
+    static String encode(Type parameter, boolean packed) {
         if (parameter instanceof NumericType) {
             return encodeNumeric((NumericType) parameter, packed);
         } else if (parameter instanceof Address) {
@@ -68,7 +70,7 @@ public class TypeEncoder {
         } else if (parameter instanceof Utf8String) {
             return encodeString((Utf8String) parameter, packed);
         } else if (parameter instanceof StaticArray) {
-            return encodeArrayValues((StaticArray) parameter, false);
+            return encodeArrayValues((StaticArray) parameter);
         } else if (parameter instanceof DynamicArray) {
             return encodeDynamicArray((DynamicArray) parameter, packed);
         } else {
@@ -78,7 +80,10 @@ public class TypeEncoder {
     }
 
     static String encodeAddress(Address address, boolean packed) {
-        return encodeNumeric(address.toUint160(), packed);
+        if (packed) {
+            return Numeric.cleanHexPrefix(address.toString());
+        }
+        return Numeric.toHexStringNoPrefixZeroPadded(address.toUint160().getValue(),MAX_BYTE_LENGTH * 2);
     }
 
     static String encodeNumeric(NumericType numericType, boolean packed) {
@@ -175,7 +180,7 @@ public class TypeEncoder {
         return encodeDynamicBytes(new DynamicBytes(utfEncoded), packed);
     }
 
-    static <T extends Type> String encodeArrayValues(Array<T> value, boolean packed) {
+    static <T extends Type> String encodeArrayValues(Array<T> value) {
         StringBuilder result = new StringBuilder();
         for (Type type : value.getValue()) {
             result.append(encode(type, false));
@@ -187,7 +192,7 @@ public class TypeEncoder {
         int size = value.getValue().size();
         String encodedLength = encode(new Uint(BigInteger.valueOf(size)));
         String valuesOffsets = encodeArrayValuesOffsets(value);
-        String encodedValues = encodeArrayValues(value, packed);
+        String encodedValues = encodeArrayValues(value);
         if (packed) {
             return encodedValues;
         }
